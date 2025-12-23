@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - liquid</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <!-- Animated Background -->
+  <div class="bg-animation">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="grid-overlay"></div>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <a href="/" class="nav-brand">
+      <div class="logo-icon">
+        <svg viewBox="0 0 40 40" fill="none">
+          <circle cx="20" cy="20" r="18" stroke="url(#logoGrad2)" stroke-width="2"/>
+          <path d="M20 8 L20 32 M12 16 L20 8 L28 16 M12 24 L20 32 L28 24" stroke="url(#logoGrad2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <defs>
+            <linearGradient id="logoGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#00FFA3"/>
+              <stop offset="100%" stop-color="#00D4FF"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <span class="brand-text">liquid</span>
+    </a>
+    <div class="nav-links">
+      <a href="/">Launch</a>
+      <a href="/dashboard.html" class="active">Dashboard</a>
+    </div>
+    <button class="btn-connect" id="connectWallet">
+      <span class="btn-text">Connect Wallet</span>
+    </button>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="dashboard">
+    <!-- Connection Required State -->
+    <div class="connect-prompt" id="connectPrompt">
+      <div class="prompt-content">
+        <div class="prompt-icon">🔐</div>
+        <h2>Connect Your Wallet</h2>
+        <p>Connect your Phantom wallet to view your tokens and liquidity stats.</p>
+        <button class="btn-primary" onclick="document.getElementById('connectWallet').click()">
+          <span>Connect Wallet</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Dashboard Content (hidden until connected) -->
+    <div class="dashboard-content" id="dashboardContent" style="display: none;">
+      <!-- Overview Cards -->
+      <div class="overview-section">
+        <h1>Your Tokens</h1>
+        <div class="overview-cards">
+          <div class="overview-card">
+            <div class="card-icon">🪙</div>
+            <div class="card-data">
+              <span class="card-value" id="tokenCount">0</span>
+              <span class="card-label">Tokens Launched</span>
+            </div>
+          </div>
+          <div class="overview-card">
+            <div class="card-icon">💰</div>
+            <div class="card-data">
+              <span class="card-value" id="totalFees">0 SOL</span>
+              <span class="card-label">Total Fees Claimed</span>
+            </div>
+          </div>
+          <div class="overview-card">
+            <div class="card-icon">🌊</div>
+            <div class="card-data">
+              <span class="card-value" id="totalLP">0 SOL</span>
+              <span class="card-label">Added to Liquidity</span>
+            </div>
+          </div>
+          <div class="overview-card graduated">
+            <div class="card-icon">🎓</div>
+            <div class="card-data">
+              <span class="card-value" id="graduatedCount">0</span>
+              <span class="card-label">Graduated Tokens</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tokens List -->
+      <div class="tokens-section">
+        <div class="section-header">
+          <h2>All Tokens</h2>
+          <a href="/#create" class="btn-new">
+            <span>+ New Token</span>
+          </a>
+        </div>
+
+        <div class="tokens-list" id="tokensList">
+          <!-- Loading state -->
+          <div class="loading-state" id="loadingTokens">
+            <div class="loader-big"></div>
+            <p>Loading your tokens...</p>
+          </div>
+
+          <!-- Empty state -->
+          <div class="empty-state" id="emptyState" style="display: none;">
+            <div class="empty-icon">🚀</div>
+            <h3>No tokens yet</h3>
+            <p>Launch your first token with auto-liquidity!</p>
+            <a href="/#create" class="btn-primary">
+              <span>Create Token</span>
+            </a>
+          </div>
+
+          <!-- Tokens will be inserted here -->
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Token Detail Modal -->
+  <div class="modal" id="tokenModal" style="display: none;">
+    <div class="modal-overlay" onclick="closeTokenModal()"></div>
+    <div class="modal-content token-detail">
+      <button class="modal-close" onclick="closeTokenModal()">×</button>
+      <div id="tokenDetailContent">
+        <!-- Content loaded dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>
+

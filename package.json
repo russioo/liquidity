@@ -1,0 +1,29 @@
+{
+  "name": "liquidify",
+  "version": "1.0.0",
+  "description": "Auto-liquidity engine for Pumpfun tokens",
+  "scripts": {
+    "test:liquidity": "npx ts-node test-add-liquidity.ts",
+    "test:liquid": "npx ts-node test-liquid-tech.ts",
+    "bot": "npx ts-node liquidify-bot.ts",
+    "backend": "cd backend && npm run dev",
+    "frontend": "cd web && npm run dev",
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\""
+  },
+  "dependencies": {
+    "@pump-fun/pump-sdk": "^1.24.0",
+    "@pump-fun/pump-swap-sdk": "^1.11.0",
+    "@solana/spl-token": "^0.4.9",
+    "@solana/web3.js": "^1.98.4",
+    "bs58": "^5.0.0",
+    "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "@types/bn.js": "^5.2.0",
+    "@types/node": "^20.0.0",
+    "@types/node-fetch": "^2.6.13",
+    "concurrently": "^9.1.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.0.0"
+  }
+}
