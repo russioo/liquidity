@@ -496,17 +496,21 @@ tokenRoutes.post("/:id/confirm", async (req: Request, res: Response) => {
 
 /**
  * POST /api/tokens/:id/feed - Manually trigger LP feed for a token
+ * Note: Feed happens automatically via cron job every minute
  */
 tokenRoutes.post("/:id/feed", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    const result = await feedSingleToken(id);
-
-    res.json({ success: true, result });
-  } catch (error: any) {
+    // Feed happens automatically via cron, this endpoint is for manual trigger
+    res.json({ 
+      success: true, 
+      message: "Feed runs automatically every minute via cron job",
+      tokenId: id 
+    });
+  } catch (error: unknown) {
     console.error("Error triggering feed:", error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error instanceof Error ? error.message : "Unknown error" });
   }
 });
 
