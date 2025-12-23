@@ -31,6 +31,20 @@ import("./routes/tokens.js").then(({ tokenRoutes }) => {
   app.use("/api/tokens", tokenRoutes);
 });
 
+// Root route
+app.get("/", (req, res) => {
+  res.json({ 
+    name: "LIQUIDIFY API",
+    version: "1.0.0",
+    status: "running",
+    endpoints: {
+      health: "/health",
+      tokens: "/api/tokens",
+      stats: "/api/tokens/stats",
+    }
+  });
+});
+
 // Health check
 app.get("/health", (req, res) => {
   res.json({ 
