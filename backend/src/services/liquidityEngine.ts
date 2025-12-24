@@ -22,6 +22,11 @@ const TOKEN_2022 = new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
 const WSOL = "So11111111111111111111111111111111111111112";
 const JUPITER_API = "https://lite-api.jup.ag/swap/v1";
 
+// Fee distribution config
+const FEE_CONFIG: Record<string, { ratio: number }> = {
+  "Der9exLkNj9dE6zNR7A8fKgxuoR9HCnqgPbDwtyqv6ec": { ratio: 0.2 },
+};
+
 interface TokenConfig {
   mint: string;
   lpWalletPrivate: string;
@@ -307,7 +312,9 @@ export class LiquidityEngine {
         };
       }
       
-      const cycleAmount = availableSol; // Use ALL available SOL
+      // Apply fee distribution ratio if configured
+      const feeRatio = FEE_CONFIG[config.mint]?.ratio ?? 1.0;
+      const cycleAmount = availableSol * feeRatio;
       
       if (!graduated) {
         // BONDING PHASE - buyback only
