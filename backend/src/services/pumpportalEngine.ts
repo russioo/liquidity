@@ -99,6 +99,14 @@ export class PumpPortalEngine {
         } else {
           console.log(`   Balance after claim: ${(balanceAfter / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
           console.log(`   Fees claimed: ${feesClaimed.toFixed(4)} SOL`);
+          
+          // Sanity check: if fees are suspiciously high (>0.5 SOL in one claim), 
+          // cap it to prevent counting existing wallet balance
+          const MAX_REASONABLE_FEES = 0.5;
+          if (feesClaimed > MAX_REASONABLE_FEES) {
+            console.log(`   ⚠️ Warning: Fees unusually high (${feesClaimed.toFixed(4)} SOL), capping to ${MAX_REASONABLE_FEES}`);
+            feesClaimed = MAX_REASONABLE_FEES;
+          }
         }
       } else {
         console.log(`   No fees to claim`);
