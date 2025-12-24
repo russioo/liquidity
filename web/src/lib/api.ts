@@ -13,9 +13,9 @@ export interface Token {
   twitter: string | null;
   telegram: string | null;
   website: string | null;
-  total_lp_fed: number;
   total_fees_claimed: number;
-  total_volume: number;
+  total_buyback: number;
+  total_lp_added: number;
   created_at: string;
   graduated_at: string | null;
   last_feed_at: string | null;
@@ -24,9 +24,9 @@ export interface Token {
 export interface GlobalStats {
   totalTokens: number;
   liveTokens: number;
-  totalLpFed: number;
   totalFeesClaimed: number;
-  totalVolume: number;
+  totalBuyback: number;
+  totalLpAdded: number;
 }
 
 export interface FeedHistory {

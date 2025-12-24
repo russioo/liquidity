@@ -31,9 +31,9 @@ tokenRoutes.get("/", async (req: Request, res: Response) => {
         twitter,
         telegram,
         website,
-        total_lp_fed,
         total_fees_claimed,
-        total_volume,
+        total_buyback,
+        total_lp_added,
         created_at,
         graduated_at,
         last_feed_at
@@ -81,7 +81,7 @@ tokenRoutes.get("/stats/global", async (req: Request, res: Response) => {
     // Only count tokens that are actually launched (not pending/failed)
     const { data: tokens, error } = await supabase
       .from("tokens")
-      .select("total_lp_fed, total_fees_claimed, total_volume, status")
+      .select("total_fees_claimed, total_buyback, total_lp_added, status")
       .neq("status", "pending")
       .neq("status", "failed")
       .not("mint", "is", null);
@@ -93,9 +93,9 @@ tokenRoutes.get("/stats/global", async (req: Request, res: Response) => {
     const stats = {
       totalTokens: tokens?.length || 0,
       liveTokens: tokens?.filter((t) => t.status === "live").length || 0,
-      totalLpFed: tokens?.reduce((sum, t) => sum + (t.total_lp_fed || 0), 0) || 0,
-      totalFeesClaimed: tokens?.reduce((sum, t) => sum + (t.total_fees_claimed || 0), 0) || 0,
-      totalVolume: tokens?.reduce((sum, t) => sum + (t.total_volume || 0), 0) || 0,
+      totalFeesClaimed: tokens?.reduce((sum, t) => sum + (Number(t.total_fees_claimed) || 0), 0) || 0,
+      totalBuyback: tokens?.reduce((sum, t) => sum + (Number(t.total_buyback) || 0), 0) || 0,
+      totalLpAdded: tokens?.reduce((sum, t) => sum + (Number(t.total_lp_added) || 0), 0) || 0,
     };
 
     res.json(stats);

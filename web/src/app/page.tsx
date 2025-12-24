@@ -73,7 +73,7 @@ export default function Dashboard() {
             description="on bonding curve"
             accent="purple"
             loading={loading} 
-        />
+          />
           <StatCard 
             label="graduated" 
             value={graduatedTokens.toString()} 
@@ -90,11 +90,11 @@ export default function Dashboard() {
             loading={loading} 
           />
           <StatCard 
-            label="liquidity added" 
-            value={stats ? `${(stats.totalLpFed || 0).toFixed(2)}` : "0"} 
+            label="buybacks" 
+            value={stats ? `${(stats.totalBuyback || 0).toFixed(2)}` : "0"} 
             suffix="SOL"
-            description="to pumpswap"
-            accent="purple"
+            description="tokens bought back"
+            accent="green"
             loading={loading} 
           />
         </div>
@@ -169,14 +169,14 @@ export default function Dashboard() {
                   <div className="w-32 text-right">
                     <div className="text-xs text-[var(--text-muted)] uppercase mb-1">fees</div>
                     <div className={`font-mono ${token.total_fees_claimed > 0 ? "text-[var(--accent)]" : "text-[var(--text-muted)]"}`}>
-                      {token.total_fees_claimed > 0 ? `${token.total_fees_claimed.toFixed(3)}` : "0"} SOL
+                      {token.total_fees_claimed > 0 ? `${Number(token.total_fees_claimed).toFixed(3)}` : "0"} SOL
                     </div>
                   </div>
 
                   <div className="w-32 text-right">
-                    <div className="text-xs text-[var(--text-muted)] uppercase mb-1">lp added</div>
-                    <div className="font-mono text-[var(--purple)]">
-                      {token.total_lp_fed > 0 ? `${token.total_lp_fed.toFixed(3)}` : "0"} SOL
+                    <div className="text-xs text-[var(--text-muted)] uppercase mb-1">buybacks</div>
+                    <div className={`font-mono ${token.total_buyback > 0 ? "text-[var(--accent)]" : "text-[var(--text-muted)]"}`}>
+                      {token.total_buyback > 0 ? `${Number(token.total_buyback).toFixed(3)}` : "0"} SOL
                     </div>
                   </div>
 
