@@ -48,7 +48,7 @@ export async function createTokenWithOfficialSdk(params: {
         },
         mint: mintKeypair.publicKey.toBase58(),
         denominatedInSol: "true",
-        amount: params.initialBuySol || 0.01, // Small initial buy
+        amount: params.initialBuySol || 0, // No initial buy by default
         slippage: 50, // 50% slippage for new tokens
         priorityFee: 0.001, // Higher priority
         pool: "pump",
