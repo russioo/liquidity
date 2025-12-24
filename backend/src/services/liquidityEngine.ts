@@ -360,8 +360,11 @@ export class LiquidityEngine {
           transactions,
         };
       } else {
-        // GRADUATED - buyback + LP
-        const buyResult = await this.buyJupiter(wallet, config.mint, cycleAmount);
+        // GRADUATED - buyback + LP (split cycleAmount 50/50)
+        const buybackAmount = cycleAmount / 2;
+        const lpBudget = cycleAmount / 2;
+        
+        const buyResult = await this.buyJupiter(wallet, config.mint, buybackAmount);
         if (buyResult.signature) {
           transactions.push({
             type: "buyback",
@@ -373,9 +376,8 @@ export class LiquidityEngine {
         // Wait a bit
         await new Promise(r => setTimeout(r, 2000));
         
-        // Add LP
-        const newBalance = await this.connection.getBalance(wallet.publicKey);
-        const solForLp = Math.min((newBalance / LAMPORTS_PER_SOL) - 0.005, cycleAmount / 2);
+        // Add LP - only use the LP budget, never more
+        const solForLp = lpBudget;
         
         let lpResult: { lpTokens: number; signature?: string } = { lpTokens: 0 };
         if (solForLp > 0.001 && poolKey) {
@@ -393,7 +395,7 @@ export class LiquidityEngine {
           success: true,
           phase: "graduated",
           feesClaimed: feeResult.amount,
-          buybackSol: cycleAmount,
+          buybackSol: buybackAmount,
           buybackTokens: buyResult.tokensOut,
           lpSol: solForLp,
           lpTokens: lpResult.lpTokens,
