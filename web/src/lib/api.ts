@@ -97,6 +97,7 @@ export async function createToken(data: {
   website?: string;
   creatorWallet: string;
   devPrivateKey?: string; // Private key for automation wallet
+  initialBuySol?: number; // Initial buy amount in SOL
 }): Promise<{ 
   success: boolean; 
   tokenId: string; 

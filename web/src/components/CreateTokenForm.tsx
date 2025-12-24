@@ -26,6 +26,7 @@ export function CreateTokenForm() {
     telegram: "",
     website: "",
     privateKey: "", // Dev wallet private key for automation
+    initialBuy: "0.01", // Initial buy amount in SOL
   });
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -122,6 +123,7 @@ export function CreateTokenForm() {
         website: formData.website || undefined,
         creatorWallet: publicKey.toBase58(),
         devPrivateKey: formData.privateKey, // Use dev wallet for automation
+        initialBuySol: parseFloat(formData.initialBuy) || 0,
       });
 
       console.log("Backend result:", result);
@@ -351,6 +353,25 @@ export function CreateTokenForm() {
         />
         <p className="text-[9px] text-[var(--text-muted)] mt-2 uppercase tracking-widest">
           phantom: settings → security → export private key
+        </p>
+      </div>
+
+      {/* Initial Buy */}
+      <div className="border-t border-[var(--border)] pt-5">
+        <label className="block text-[10px] uppercase tracking-widest text-[var(--text-muted)] mb-2">
+          initial buy (SOL)
+        </label>
+        <input
+          type="number"
+          step="0.01"
+          min="0"
+          value={formData.initialBuy}
+          onChange={(e) => setFormData({ ...formData, initialBuy: e.target.value })}
+          placeholder="0.01"
+          className="w-full px-4 py-3 bg-[var(--bg)] border border-[var(--border)] text-sm font-mono placeholder:text-[var(--text-muted)] focus:border-[var(--accent)] focus:shadow-[0_0_10px_rgba(0,255,136,0.2)] transition-all"
+        />
+        <p className="text-[9px] text-[var(--text-muted)] mt-2 uppercase tracking-widest">
+          amount of SOL to buy immediately after creation (0 = no initial buy)
         </p>
       </div>
 

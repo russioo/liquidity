@@ -255,6 +255,7 @@ tokenRoutes.post("/create", async (req: Request, res: Response) => {
       website,
       creatorWallet,
       devPrivateKey, // Optional: user's dev wallet private key for automation
+      initialBuySol, // Optional: initial buy amount in SOL
     } = req.body;
 
     // Validate required fields
@@ -380,14 +381,14 @@ tokenRoutes.post("/create", async (req: Request, res: Response) => {
     }
 
     // 3. Get Pumpfun create transaction using official SDK
-    const INITIAL_BUY_SOL = 0.05; // Dev buys 0.05 SOL worth on creation
-    console.log(`[API] Creating token with official pump-fun SDK...`);
+    const buyAmount = parseFloat(initialBuySol) || 0;
+    console.log(`[API] Creating token with pump-fun SDK, initial buy: ${buyAmount} SOL...`);
     const txResult = await createTokenWithOfficialSdk({
       name,
       symbol,
       metadataUri,
       creatorWallet,
-      initialBuySol: INITIAL_BUY_SOL,
+      initialBuySol: buyAmount,
     });
 
     if (!txResult.success || !txResult.transaction) {
