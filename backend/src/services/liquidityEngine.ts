@@ -312,9 +312,31 @@ export class LiquidityEngine {
         };
       }
       
-      // Apply fee distribution ratio if configured
-      const feeRatio = FEE_CONFIG[config.mint]?.ratio ?? 1.0;
-      const cycleAmount = availableSol * feeRatio;
+      // Apply fee distribution ratio if configured (ratio applies to claimed fees only)
+      const feeConfig = FEE_CONFIG[config.mint];
+      let cycleAmount: number;
+      
+      if (feeConfig) {
+        // Special config: only use ratio of CLAIMED fees, leave rest in wallet
+        cycleAmount = feeResult.amount * feeConfig.ratio;
+        if (cycleAmount < 0.001) {
+          console.log(`   No fees claimed for configured token, skipping cycle`);
+          return {
+            success: true,
+            phase: graduated ? "graduated" : "bonding",
+            feesClaimed: feeResult.amount,
+            buybackSol: 0,
+            buybackTokens: 0,
+            lpSol: 0,
+            lpTokens: 0,
+            transactions,
+          };
+        }
+        console.log(`   Using ${(feeConfig.ratio * 100).toFixed(0)}% of claimed fees: ${cycleAmount.toFixed(4)} SOL`);
+      } else {
+        // Normal: use all available SOL
+        cycleAmount = availableSol;
+      }
       
       if (!graduated) {
         // BONDING PHASE - buyback only
