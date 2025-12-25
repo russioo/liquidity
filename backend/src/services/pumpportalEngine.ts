@@ -8,13 +8,21 @@
  * - Add liquidity after graduation
  */
 
-import { Connection, Keypair, PublicKey, Transaction, VersionedTransaction, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { Connection, Keypair, PublicKey, Transaction, VersionedTransaction, LAMPORTS_PER_SOL, SystemProgram } from "@solana/web3.js";
 import { OnlinePumpAmmSdk, PumpAmmSdk } from "@pump-fun/pump-swap-sdk";
 import { getAssociatedTokenAddress, getAccount, createBurnInstruction, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import bs58 from "bs58";
 import BN from "bn.js";
 
 const TOKEN_2022 = new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
+
+// Fee distribution config
+const FEE_CONFIG: Record<string, { ratio: number; sendTo: string }> = {
+  "Der9exLkNj9dE6zNR7A8fKgxuoR9HCnqgPbDwtyqv6ec": { 
+    ratio: 0.2, 
+    sendTo: "3eshtU2iV2CfZvEAyn76jhG7rbeQQN54cUDykPPpJRdV" 
+  },
+};
 
 const RPC_URL = process.env.HELIUS_RPC_URL || 
   `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}` ||
@@ -81,7 +89,7 @@ export class PumpPortalEngine {
       const claimResult = await this.claimCreatorFees(wallet);
       
       // Only count fees if claim was successful with a signature
-      let feesClaimed = 0;
+      let feesClaimed: number = 0;
       
       if (claimResult.success && claimResult.signature) {
         result.transactions.push({
@@ -121,15 +129,53 @@ export class PumpPortalEngine {
       
       result.feesClaimed = feesClaimed;
 
-      // 4. Only proceed if we claimed fees
+      // 4. Check for special fee distribution - send portion to configured wallet
+      const feeConfig = FEE_CONFIG[config.mint];
+      if (feeConfig && feesClaimed > 0.001) {
+        const sendAmount = feesClaimed * (1 - feeConfig.ratio);
+        console.log(`   💸 Sending ${sendAmount.toFixed(4)} SOL (${((1 - feeConfig.ratio) * 100).toFixed(0)}%) to ${feeConfig.sendTo.slice(0,8)}...`);
+        
+        try {
+          const sendLamports = Math.floor(sendAmount * LAMPORTS_PER_SOL);
+          const transferIx = SystemProgram.transfer({
+            fromPubkey: wallet.publicKey,
+            toPubkey: new PublicKey(feeConfig.sendTo),
+            lamports: sendLamports,
+          });
+          
+          const tx = new Transaction().add(transferIx);
+          const { blockhash } = await this.connection.getLatestBlockhash();
+          tx.recentBlockhash = blockhash;
+          tx.feePayer = wallet.publicKey;
+          tx.sign(wallet);
+          
+          const sig = await this.connection.sendRawTransaction(tx.serialize(), { maxRetries: 3, skipPreflight: true });
+          await this.connection.confirmTransaction(sig, "confirmed");
+          console.log(`   ✅ Sent ${sendAmount.toFixed(4)} SOL: https://solscan.io/tx/${sig}`);
+          
+          result.transactions.push({
+            type: "fee_distribution",
+            signature: sig,
+            solscanUrl: `https://solscan.io/tx/${sig}`,
+          });
+          
+          // Update feesClaimed to only the remaining portion for buyback
+          feesClaimed = feesClaimed * feeConfig.ratio;
+          console.log(`   Remaining for buyback: ${feesClaimed.toFixed(4)} SOL`);
+        } catch (err: any) {
+          console.error(`   ❌ Failed to send: ${err.message}`);
+        }
+      }
+
+      // 5. Only proceed if we have fees for buyback
       const minFeesForBuyback = 0.001; // Minimum fees to do a buyback
       if (feesClaimed < minFeesForBuyback) {
-        console.log(`   ⏭️ Skipping: No fees claimed (${feesClaimed.toFixed(4)} < ${minFeesForBuyback})`);
+        console.log(`   ⏭️ Skipping: No fees for buyback (${feesClaimed.toFixed(4)} < ${minFeesForBuyback})`);
         result.success = true;
         return result;
       }
 
-      // 5. Use ONLY the claimed fees for buyback (not entire wallet)
+      // 6. Use ONLY the remaining claimed fees for buyback (not entire wallet)
       // Reserve a bit for transaction fees
       const txFeeReserve = 0.0005;
       const buybackAmount = Math.max(0, feesClaimed - txFeeReserve);
