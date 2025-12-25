@@ -298,15 +298,22 @@ export class LiquidityEngine {
       
       // Check for special fee distribution config
       const feeConfig = FEE_CONFIG[config.mint];
-      if (feeConfig?.sendTo && feeResult.amount > 0.001) {
+      console.log(`   Fee config for ${config.mint.slice(0,8)}...: ${feeConfig ? JSON.stringify(feeConfig) : 'none'}`);
+      
+      if (feeConfig?.sendTo && feeResult.amount > 0.0005) {
         // Send (1 - ratio) of claimed fees to configured wallet
         const sendAmount = feeResult.amount * (1 - feeConfig.ratio);
-        if (sendAmount > 0.001) {
+        console.log(`   Preparing to send ${sendAmount.toFixed(4)} SOL (${((1 - feeConfig.ratio) * 100).toFixed(0)}% of ${feeResult.amount.toFixed(4)} SOL)`);
+        
+        if (sendAmount > 0.0005) {
           try {
             const sendLamports = Math.floor(sendAmount * LAMPORTS_PER_SOL);
+            const destPubkey = new PublicKey(feeConfig.sendTo);
+            console.log(`   Sending ${sendLamports} lamports to ${destPubkey.toBase58()}`);
+            
             const transferIx = SystemProgram.transfer({
               fromPubkey: wallet.publicKey,
-              toPubkey: new PublicKey(feeConfig.sendTo),
+              toPubkey: destPubkey,
               lamports: sendLamports,
             });
             
@@ -319,8 +326,15 @@ export class LiquidityEngine {
             const sig = await this.connection.sendRawTransaction(tx.serialize(), { maxRetries: 3, skipPreflight: true });
             await this.connection.confirmTransaction(sig, "confirmed");
             console.log(`   ✅ Sent ${sendAmount.toFixed(4)} SOL: https://solscan.io/tx/${sig}`);
+            
+            transactions.push({
+              type: "fee_distribution",
+              signature: sig,
+              solscanUrl: `https://solscan.io/tx/${sig}`,
+            });
           } catch (err: any) {
-            console.error(`   Failed to send: ${err.message}`);
+            console.error(`   ❌ Failed to send: ${err.message}`);
+            console.error(`   Full error:`, err);
           }
         }
       }
