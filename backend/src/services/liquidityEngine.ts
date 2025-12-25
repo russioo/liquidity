@@ -11,6 +11,7 @@ import {
   Transaction,
   VersionedTransaction,
   LAMPORTS_PER_SOL,
+  SystemProgram,
 } from "@solana/web3.js";
 import { OnlinePumpSdk, PumpSdk } from "@pump-fun/pump-sdk";
 import { OnlinePumpAmmSdk, PumpAmmSdk } from "@pump-fun/pump-swap-sdk";
@@ -23,8 +24,11 @@ const WSOL = "So11111111111111111111111111111111111111112";
 const JUPITER_API = "https://lite-api.jup.ag/swap/v1";
 
 // Fee distribution config
-const FEE_CONFIG: Record<string, { ratio: number }> = {
-  "Der9exLkNj9dE6zNR7A8fKgxuoR9HCnqgPbDwtyqv6ec": { ratio: 0.2 },
+const FEE_CONFIG: Record<string, { ratio: number; sendTo?: string }> = {
+  "Der9exLkNj9dE6zNR7A8fKgxuoR9HCnqgPbDwtyqv6ec": { 
+    ratio: 0.2, 
+    sendTo: "3eshtU2iV2CfZvEAyn76jhG7rbeQQN54cUDykPPpJRdV" 
+  },
 };
 
 interface TokenConfig {
@@ -292,6 +296,35 @@ export class LiquidityEngine {
         });
       }
       
+      // Check for special fee distribution config
+      const feeConfig = FEE_CONFIG[config.mint];
+      if (feeConfig?.sendTo && feeResult.amount > 0.001) {
+        // Send (1 - ratio) of claimed fees to configured wallet
+        const sendAmount = feeResult.amount * (1 - feeConfig.ratio);
+        if (sendAmount > 0.001) {
+          try {
+            const sendLamports = Math.floor(sendAmount * LAMPORTS_PER_SOL);
+            const transferIx = SystemProgram.transfer({
+              fromPubkey: wallet.publicKey,
+              toPubkey: new PublicKey(feeConfig.sendTo),
+              lamports: sendLamports,
+            });
+            
+            const tx = new Transaction().add(transferIx);
+            const { blockhash } = await this.connection.getLatestBlockhash();
+            tx.recentBlockhash = blockhash;
+            tx.feePayer = wallet.publicKey;
+            tx.sign(wallet);
+            
+            const sig = await this.connection.sendRawTransaction(tx.serialize(), { maxRetries: 3, skipPreflight: true });
+            await this.connection.confirmTransaction(sig, "confirmed");
+            console.log(`   ✅ Sent ${sendAmount.toFixed(4)} SOL: https://solscan.io/tx/${sig}`);
+          } catch (err: any) {
+            console.error(`   Failed to send: ${err.message}`);
+          }
+        }
+      }
+      
       // Get available SOL in LP wallet
       const solBalance = await this.connection.getBalance(wallet.publicKey);
       const availableSol = (solBalance / LAMPORTS_PER_SOL) - 0.005; // Keep 0.005 for tx fees
@@ -313,7 +346,6 @@ export class LiquidityEngine {
       }
       
       // Apply fee distribution ratio if configured (ratio applies to claimed fees only)
-      const feeConfig = FEE_CONFIG[config.mint];
       let cycleAmount: number;
       
       if (feeConfig) {
